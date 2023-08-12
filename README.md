@@ -1,2 +1,2 @@
 # vanilla-js-img-compression
-Basic javascript compression module which initiates upon input upload.
+Basic javascript compression module that capture all of your page image input uploads.
