@@ -51,9 +51,10 @@
   const constructImagesArray = () => {
     const elements = document.querySelectorAll('input[type="file"]');
     const imgUploadElements = [];
+    const types = ['png', 'jpg', 'jpeg'];
+    
     for (let i = 0; i < elements.length; i++) {
-      const accept = elements[i].getAttribute('accept');
-      const types = ['png', 'jpg', 'jpeg'];
+      let accept = elements[i].getAttribute('accept');
       if (accept) {
         for (let x = 0; x < types.length; x++) {
           if (accept.includes(types[x])) {
@@ -72,7 +73,7 @@
   imagesArray.forEach( (img) => {
     img.addEventListener('change', async (e) => {
       // Get the files
-      const { files } = e.target;
+      let { files } = e.target;
 
       // No files selected
       if (!files.length) return;
