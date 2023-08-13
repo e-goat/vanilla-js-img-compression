@@ -1,58 +1,64 @@
 /**
-* @Author Martin Duchev
-* This file is generated globally and captures all inputs of type 'file' that accept images.
-* @COMPRESSION_RATE @type int - Change this value up to 0.99 or 1 to adjust the compression percentile rate
-* Optimal compression rate is 0.8
-**/
+ * @Author Martin Duchev
+ * This file is generated globally and captures all inputs of type 'file' that accept images.
+ * @COMPRESSION_RATE @type int - Change this value up to 0.99 or 1 to adjust the compression percentile rate
+ * Optimal compression rate is 0.8
+ */
 
 (() => {
-  "use strict"
+  "use strict";
 
-  // Maximum of 1
+  // Maximum compression rate of 1
   const COMPRESSION_RATE = 0.5;
 
-  // HELPER FUNCTIONS
-  //Get img size in bytes
-  const getImgBase64 = (image) => {
+  /**
+   * Retrieves the base64 representation of an image.
+   * @param {HTMLImageElement} image - The image to retrieve base64 data from.
+   * @returns {Promise} - A promise that resolves with the image's array buffer.
+   */
+  const getImgBase64 = async (image) => {
     return fetch(image.src)
-    .then( response => response.arrayBuffer() )
-    .then( buffer => console.log(buffer) );
-  }
-  // HELPER FUNCTIONS
-
-  const compressImage = async (file, { quality = 1, type = file.type }) => {
-      // Get as image data
-      const imageBitmap = await createImageBitmap(file);
-
-      // Draw to canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = imageBitmap.width;
-      canvas.height = imageBitmap.height;
-      const ctx = canvas.getContext('2d');
-
-      // Replicate PNG transperancy
-      ctx.fillStyle = '#fff';  /// set white fill style
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.drawImage(imageBitmap, 0, 0);
-
-      // Turn into Blob
-      const blob = await new Promise((resolve) =>
-          canvas.toBlob(resolve, type, quality)
-      );
-
-      // Turn Blob into File
-      return new File([blob], file.name, {
-          type: blob.type,
-      });
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => buffer);
   };
 
-  // get all image file inputs and return an array of DOM nodes
+  /**
+   * Compresses an image file with specified quality and type.
+   * @param {File} file - The image file to be compressed.
+   * @param {object} options - Compression options including quality and type.
+   * @returns {Promise} - A promise that resolves with the compressed image as a File object.
+   */
+  const compressImage = async (file, { quality = 1, type = file.type }) => {
+    const imageBitmap = await createImageBitmap(file);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = imageBitmap.width;
+    canvas.height = imageBitmap.height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#fff'; // Set white fill style
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(imageBitmap, 0, 0);
+
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, type, quality)
+    );
+
+    return new File([blob], file.name, {
+      type: blob.type,
+    });
+  };
+
+  /**
+   * Constructs an array of DOM nodes that are input elements with 'file' type and accept image formats.
+   * @returns {Array} - An array of input elements that accept image files.
+   */
   const constructImagesArray = () => {
     const elements = document.querySelectorAll('input[type="file"]');
     const imgUploadElements = [];
     const types = ['png', 'jpg', 'jpeg'];
-    
+
     for (let i = 0; i < elements.length; i++) {
       let accept = elements[i].getAttribute('accept');
       if (accept) {
@@ -65,45 +71,33 @@
       }
     }
     return imgUploadElements;
-  }
+  };
 
   // Store all image nodes in the below immutable variable
   const imagesArray = constructImagesArray();
 
-  imagesArray.forEach( (img) => {
+  imagesArray.forEach((img) => {
     img.addEventListener('change', async (e) => {
-      // Get the files
       let { files } = e.target;
 
-      // No files selected
       if (!files.length) return;
 
-      // Skip compression of PNG images
-      // if (files[0].type == 'image/png') return;
-
-      // We'll store the files in this data transfer object
       const dataTransfer = new DataTransfer();
 
-      // For every file in the files list
       for (const file of files) {
-          // We don't have to compress files that aren't images
-          if (!file.type.startsWith('image')) {
-              // Ignore this file, but do add it to our result
-              dataTransfer.items.add(file);
-              continue;
-          }
+        if (!file.type.startsWith('image')) {
+          dataTransfer.items.add(file);
+          continue;
+        }
 
-          // We compress the file by 50%
-          const compressedFile = await compressImage(file, {
-              quality: COMPRESSION_RATE,
-              type: 'image/jpeg',
-          });
-          // Save back the compressed file instead of the original file
-          dataTransfer.items.add(compressedFile);
+        const compressedFile = await compressImage(file, {
+          quality: COMPRESSION_RATE,
+          type: 'image/jpeg',
+        });
+        dataTransfer.items.add(compressedFile);
       }
 
-      // Set value of the file input to our new files list
       e.target.files = dataTransfer.files;
-    })
-  })
+    });
+  });
 })();
